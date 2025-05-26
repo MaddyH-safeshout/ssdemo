@@ -1,0 +1,2660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SafeShout - Complete Platform Demo</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --safeshout-purple: #3a1a78;
+      --safeshout-orange: #ff5b37;
+      --text-dark: #2d3748;
+      --text-light: #718096;
+      --bg-light: #f7fafc;
+      --border-color: #e2e8f0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-light);
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--safeshout-purple), var(--safeshout-orange));
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      font-size: 1.25rem;
+      opacity: 0.9;
+    }
+
+    .nav-tabs {
+      background: white;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 2rem;
+      display: flex;
+      overflow-x: auto;
+    }
+
+    .nav-tab {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-tab:hover {
+      background: var(--bg-light);
+    }
+
+    .nav-tab.active {
+      border-bottom-color: var(--safeshout-purple);
+      color: var(--safeshout-purple);
+      font-weight: 600;
+    }
+
+    .content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: var(--safeshout-purple);
+      color: white;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-content {
+      padding: 2rem;
+    }
+
+    .button {
+      background: var(--safeshout-orange);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .grid {
+      display: grid;
+      gap: 2rem;
+    }
+
+    .grid-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .grid-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #c6f6d5;
+      color: #22543d;
+    }
+
+    .metric-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .metric-value {
+      font-size: 3rem;
+      font-weight: bold;
+      color: var(--safeshout-purple);
+      margin-bottom: 0.5rem;
+    }
+
+    #map {
+      height: 400px;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+      
+      .nav-tabs {
+        padding: 0 1rem;
+      }
+      
+      .content {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>SafeShout Platform</h1>
+    <p>Complete safeguarding solution for educational institutions</p>
+  </div>
+
+  <nav class="nav-tabs">
+    <div class="nav-tab active" onclick="showTab('overview')">
+      <span>🏠</span> Overview
+    </div>
+    <div class="nav-tab" onclick="showTab('reports')">
+      <span>📝</span> Reports
+    </div>
+    <div class="nav-tab" onclick="showTab('api-intelligence')">
+      <span>🤖</span> API Intelligence
+    </div>
+    <div class="nav-tab" onclick="showTab('consent')">
+      <span>⚖️</span> Consent Forms
+    </div>
+    <div class="nav-tab" onclick="showTab('maps')">
+      <span>🗺️</span> Location Maps
+    </div>
+    <div class="nav-tab" onclick="showTab('analytics')">
+      <span>📊</span> Analytics
+    </div>
+    <div class="nav-tab" onclick="showTab('actions')">
+      <span>⚡</span> Professional Actions
+    </div>
+    <div class="nav-tab" onclick="showTab('branding')">
+      <span>🎨</span> School Branding
+    </div>
+  </nav>
+
+  <div class="content">
+    <!-- Overview Section -->
+    <div id="overview" class="section active">
+      <div class="card">
+        <div class="card-header">
+          <h2>Platform Overview</h2>
+          <span class="status-badge">All Systems Operational</span>
+        </div>
+        <div class="card-content">
+          <div class="grid grid-3">
+            <div class="metric-card">
+              <div class="metric-value">247</div>
+              <div>Total Reports</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value">94%</div>
+              <div>AI Accuracy</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value">4.2h</div>
+              <div>Avg Response</div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 2rem; text-align: center;">
+            <p style="font-size: 1.1rem; margin-bottom: 1rem;">Explore each feature using the tabs above</p>
+            <button class="button" onclick="showTab('reports')">Start with Reports →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case Management Section -->
+    <div id="reports" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h2>Advanced Case Management</h2>
+          <button class="button" onclick="processIncomingCase()">Process Incoming Case</button>
+        </div>
+        <div class="card-content">
+          <div class="grid grid-2">
+            <div>
+              <h3>Live Case Processing</h3>
+              <div id="caseQueue">
+                <div style="background: #fef2f2; padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #dc2626;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <strong>Case #SR-2024-247</strong>
+                    <span style="background: #dc2626; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">🚨 HIGH RISK</span>
+                  </div>
+                  <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                    <strong>Anonymous Report with Identity - Year 10 Student "Sam"</strong><br>
+                    🛡️ Trauma-Aware Identity Reveal | Time: 10:32 AM
+                  </div>
+                  <div style="background: white; padding: 0.75rem; border-radius: 4px; font-size: 0.85rem; border: 2px solid #fecaca;">
+                    <div style="color: #dc2626; font-weight: bold; margin-bottom: 0.5rem;">⚠️ High-risk keywords detected: "unsafe", "threatened"</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>Student chose to reveal:</strong> First name "Sam" + Year 10</div>
+                    <div style="color: #059669;"><strong>Action:</strong> Immediate response protocol activated. DSL contacted. Student safety confirmed.</div>
+                  </div>
+                  <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                    <button style="background: #dc2626; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">Contact Student</button>
+                    <button style="background: #0ea5e9; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">Multi-Agency</button>
+                  </div>
+                </div>
+
+                <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #ffc107;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <strong>Case #SR-2024-248</strong>
+                    <span style="background: #ffc107; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">Processing</span>
+                  </div>
+                  <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                    <strong>Anonymous Report - Science Block</strong><br>
+                    Severity: Medium | Time: 11:15 AM
+                  </div>
+                  <div style="background: white; padding: 0.75rem; border-radius: 4px; font-size: 0.85rem;">
+                    AI Correlation: Matches pattern of 4 previous incidents. Perpetrator group identified through behavioral analysis. Recommended action: Scheduled intervention.
+                  </div>
+                </div>
+
+                <div style="background: #f0fff4; padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #38a169;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <strong>Case #SR-2024-246</strong>
+                    <span style="background: #38a169; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">Resolved</span>
+                  </div>
+                  <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                    <strong>Emily Johnson (Year 9) - Peer Issues</strong><br>
+                    Resolved: Peer mediation successful
+                  </div>
+                  <div style="background: white; padding: 0.75rem; border-radius: 4px; font-size: 0.85rem;">
+                    Outcome: 92% satisfaction rating. Family engagement positive. Follow-up scheduled for 2 weeks.
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3>Professional Collaboration Network</h3>
+              <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                <h4>Current Case Partners</h4>
+                <div style="margin: 1rem 0;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;" onclick="showContact('police')" onmouseover="this.style.background='#e6f3ff'" onmouseout="this.style.background='transparent'">
+                    <span>🚔 Police Youth Liaison Team</span>
+                    <span style="color: #4a90e2; font-weight: bold;">📞 Contact</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;" onclick="showContact('camhs')" onmouseover="this.style.background='#f0fff4'" onmouseout="this.style.background='transparent'">
+                    <span>🏥 CAMHS (Child Mental Health)</span>
+                    <span style="color: #38a169; font-weight: bold;">📞 Contact</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;" onclick="showContact('social')" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='transparent'">
+                    <span>👨‍👩‍👧‍👦 Local Authority Children's Services</span>
+                    <span style="color: #f59e0b; font-weight: bold;">📞 Contact</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;" onclick="showContact('edpsych')" onmouseover="this.style.background='#faf5ff'" onmouseout="this.style.background='transparent'">
+                    <span>🎓 Educational Psychology Service</span>
+                    <span style="color: #8b5cf6; font-weight: bold;">📞 Contact</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1rem; border-radius: 8px;">
+                <h4>Professional Escalation Support</h4>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                  • DSL assessment and decision-making tools<br>
+                  • Secure case documentation and audit trails<br>
+                  • Professional contact management system<br>
+                  • Meeting coordination and scheduling support
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Intelligence Section -->
+    <div id="api-intelligence" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h2>Advanced API Intelligence Platform</h2>
+          <div>
+            <button class="button" onclick="refreshIntelligence()">Refresh Data</button>
+            <button class="button" onclick="runCorrelationAnalysis()">Run Correlation</button>
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- System Status Dashboard -->
+          <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3>Live System Integrations</h3>
+            <div class="grid grid-3" style="margin-top: 1rem;">
+              <div style="text-align: center; padding: 1rem; background: white; border-radius: 6px;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #4a90e2, #357abd); border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">C</div>
+                <strong>CPOMS</strong><br>
+                <span style="color: #38a169; font-size: 0.875rem;">98.7% Uptime</span><br>
+                <small>Last sync: 47 seconds ago</small>
+              </div>
+              <div style="text-align: center; padding: 1rem; background: white; border-radius: 6px;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #50c878, #3d9970); border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">M</div>
+                <strong>MyConcern</strong><br>
+                <span style="color: #38a169; font-size: 0.875rem;">99.2% Uptime</span><br>
+                <small>Last sync: 23 seconds ago</small>
+              </div>
+              <div style="text-align: center; padding: 1rem; background: white; border-radius: 6px;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #4285f4, #34a853); border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">G</div>
+                <strong>Google Classroom</strong><br>
+                <span style="color: #38a169; font-size: 0.875rem;">99.8% Uptime</span><br>
+                <small>Last sync: 12 seconds ago</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Named vs Anonymous Intelligence -->
+          <div class="grid grid-2" style="margin-bottom: 2rem;">
+            <div>
+              <h3>Named Report: Complete Student Profile</h3>
+              <div style="background: #f0fff4; padding: 1.5rem; border-radius: 8px; border: 1px solid #38a169;">
+                <!-- Student Header with SIMS Integration -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
+                  <div>
+                    <strong style="font-size: 1.1rem;">Emily Johnson</strong><br>
+                    <span style="color: var(--text-light);">Year 9M • House: Maple • Tutor Group: 9M/EN1</span><br>
+                    <small style="color: var(--text-light);">Head of Year: Mr. David Wilson • Form Tutor: Ms. Davies</small>
+                  </div>
+                  <div style="text-align: right;">
+                    <span style="background: #38a169; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">UPN: E200015032010</span><br>
+                    <small>DOB: 15/03/2010 • Age: 14 • Admission: Sept 2019</small>
+                  </div>
+                </div>
+
+                <!-- SIMS Integration Section -->
+                <div style="background: #fff7ed; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                  <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 4px; margin-right: 0.5rem;"></div>
+                    <strong>SIMS - Student Information Management System</strong>
+                  </div>
+                  <div style="font-size: 0.875rem;">
+                    <div class="grid grid-2" style="gap: 1rem;">
+                      <div>
+                        <strong>Student Demographics:</strong><br>
+                        • UPN: E200015032010 (Unique Pupil Number)<br>
+                        • Admission Number: 24601<br>
+                        • Year Group: 9 • Registration Group: 9M<br>
+                        • House: Maple • SEN Status: K (SEN Support)<br>
+                        • Pupil Premium: No • LAC Status: No<br>
+                        • Medical Alerts: Anxiety disorder (registered Sept 2024)
+                      </div>
+                      <div>
+                        <strong>Attendance & Behaviour:</strong><br>
+                        • Current Attendance: 87.3% (Autumn Term 2024)<br>
+                        • Authorised Absence: 8.2% • Unauthorised: 4.5%<br>
+                        • Recent Pattern: Monday AM absences increasing<br>
+                        • Behaviour Points: -12 (Past half term)<br>
+                        • Detentions: 2 (Science corridor incidents)<br>
+                        • Exclusions: None
+                      </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                      <strong>Family & Contact Information:</strong><br>
+                      • Parent 1: Sarah Johnson (Primary Contact) - 07789 123456<br>
+                      • Parent 2: Michael Johnson (Weekend Contact) - 07456 789123<br>
+                      • Emergency Contact: Linda Johnson (Grandmother) - 01234 567890<br>
+                      • Family Status: Divorced parents (2022) - Court order on file<br>
+                      • Communication Preferences: Email primary, SMS urgent only
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Safeguarding Status Flags -->
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                  <strong style="color: var(--safeshout-purple);">🛡️ Safeguarding Status & Flags</strong><br>
+                  <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                    <span style="background: #fef3c7; color: #92400e; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; border: 1px solid #d69e2e;">⚠️ SEN Support</span>
+                    <span style="background: #e6f3ff; color: #1a365d; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; border: 1px solid #4a90e2;">📋 Previous Concerns</span>
+                    <span style="background: #f0fff4; color: #22543d; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; border: 1px solid #38a169;">✓ Regular Monitoring</span>
+                    <span style="background: #fdf2f8; color: #7c2d12; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; border: 1px solid #d53f8c;">👨‍👩‍👧‍👦 Family Support Active</span>
+                  </div>
+                </div>
+
+                <!-- CPOMS Integration with detailed history -->
+                <div style="background: #e6f3ff; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                  <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #4a90e2, #357abd); border-radius: 4px; margin-right: 0.5rem;"></div>
+                    <strong>CPOMS - Child Protection Online Management System</strong>
+                  </div>
+                  <div style="font-size: 0.875rem;">
+                    <strong>Incident Records:</strong><br>
+                    • Incident #2024089: Bullying - Physical (Category: Peer on Peer Abuse)<br>
+                    • Incident #2024076: Bullying - Verbal (Category: Peer on Peer Abuse)<br>
+                    • Incident #2024045: Social Issues (Category: Emotional Wellbeing)<br>
+                    <strong>Actions Taken:</strong><br>
+                    • Logged by: Ms. Davies (Form Tutor) - Jan 10, 2024<br>
+                    • Reviewed by: Mrs. Thompson (DSL) - Jan 10, 2024<br>
+                    • Follow-up: Restorative justice session scheduled<br>
+                    <strong>Linked Records:</strong> Family context notes, SEN support plan references<br>
+                    <strong>Status:</strong> Active monitoring, no statutory involvement required
+                  </div>
+                </div>
+
+                <!-- MyConcern Wellbeing with detailed tracking -->
+                <div style="background: #f0fff4; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                  <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #50c878, #3d9970); border-radius: 4px; margin-right: 0.5rem;"></div>
+                    <strong>MyConcern - Safeguarding & Wellbeing Records</strong>
+                  </div>
+                  <div style="font-size: 0.875rem;">
+                    <strong>Concern Reports:</strong><br>
+                    • Report #MC4789: Emotional Wellbeing concern (Submitted by: Year Head)<br>
+                    • Report #MC4623: Friendship issues (Submitted by: Form Tutor)<br>
+                    • Report #MC4556: Academic stress indicators (Submitted by: Subject Teacher)<br>
+                    <strong>Interventions:</strong><br>
+                    • Pastoral support referral - Mrs. Jenkins (School Counselor)<br>
+                    • Parent meeting scheduled - 15/01/2024<br>
+                    • Tutor group check-ins implemented<br>
+                    <strong>Risk Assessment:</strong> Medium - requires ongoing monitoring<br>
+                    <strong>Next Review:</strong> 22/01/2024 (Weekly DSL review cycle)
+                  </div>
+                </div>
+
+                <!-- Google Classroom with realistic academic data -->
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+                  <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #4285f4, #34a853); border-radius: 4px; margin-right: 0.5rem;"></div>
+                    <strong>Google Classroom - Assignment & Engagement Data</strong>
+                  </div>
+                  <div style="font-size: 0.875rem;">
+                    <strong>Assignment Submission Patterns:</strong><br>
+                    • Science (Mr. Peterson): 3 late submissions in past 2 weeks<br>
+                    • English (Ms. Williams): Assignment quality declining, teacher noted "lack of engagement"<br>
+                    • Maths (Mrs. Chen): Missing 2 assignments, previously consistent student<br>
+                    <strong>Classroom Participation:</strong><br>
+                    • Reduced commenting on shared documents (previously active contributor)<br>
+                    • Not participating in group assignments via shared drives<br>
+                    • Last active in Science stream: 4 days ago (unusual for this student)<br>
+                    <strong>Teacher Observations (Private Comments):</strong><br>
+                    • "Emily seems withdrawn in class discussions" - Ms. Williams<br>
+                    • "Not engaging with practical work as usual" - Mr. Peterson<br>
+                    <strong>Note:</strong> Attendance tracking handled by separate SIMS system
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3>Anonymous Intelligence: Pattern Recognition</h3>
+              <div style="background: #fef3c7; padding: 1.5rem; border-radius: 8px; border: 1px solid #d69e2e;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                  <strong>Case Cluster Analysis</strong>
+                  <span style="background: #d69e2e; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">Privacy Protected</span>
+                </div>
+
+                <div style="background: #e6f3ff; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                  <strong>Location-Based Correlations</strong><br>
+                  <div style="font-size: 0.875rem; margin-top: 0.5rem;">
+                    • Science Block: 5 incidents this month (up 127%)<br>
+                    • Time clustering: 10:30-10:45 AM (87% of reports)<br>
+                    • Escalation pattern: Verbal → Physical → Exclusion<br>
+                    • Demographic targeting: SEN students (73% of cases)<br>
+                    • Perpetrator consistency: Same group signature
+                  </div>
+                </div>
+
+                <div style="background: #f0fff4; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                  <strong>Behavioral Pattern Detection</strong><br>
+                  <div style="font-size: 0.875rem; margin-top: 0.5rem;">
+                    • Year 9 cohort wellbeing decline: 23% overall<br>
+                    • Anxiety clusters: Science stream students<br>
+                    • Social isolation indicators: Up 35% this term<br>
+                    • Peer support requests: 89% increase<br>
+                    • Break-time incident correlation: 94% accuracy
+                  </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+                  <strong>Academic Impact Analysis</strong><br>
+                  <div style="font-size: 0.875rem; margin-top: 0.5rem;">
+                    • Science grades: Year 9 cohort down 12% average<br>
+                    • Attendance correlation: Late arrivals post-break<br>
+                    • Group work participation: 34% decline<br>
+                    • Teacher feedback: Increased classroom disruption<br>
+                    • Assignment quality: Stress indicators present
+                  </div>
+                </div>
+
+                <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+                  <strong>Identity Reveal Pathway:</strong><br>
+                  <button class="button" onclick="simulateIdentityReveal()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.875rem;">Student Chooses to Reveal Identity</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bidirectional Sync Capabilities -->
+          <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--safeshout-orange);">
+            <h3 style="color: var(--safeshout-orange); margin-bottom: 1rem;">🔄 Bidirectional System Synchronization</h3>
+            <div class="grid grid-2">
+              <div>
+                <h4>SafeShout → Existing Systems</h4>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                  <strong>CPOMS Integration:</strong><br>
+                  • Named reports automatically create CPOMS incidents<br>
+                  • Timeline entries sync with existing case files<br>
+                  • Action plans update across both platforms<br>
+                  • Media evidence transfers securely<br><br>
+                  
+                  <strong>MyConcern Updates:</strong><br>
+                  • Wellbeing concerns flag for counselor attention<br>
+                  • Risk assessments update automatically<br>
+                  • Support plan modifications sync in real-time<br>
+                  • Family engagement records shared<br><br>
+                  
+                  <strong>SIMS Integration:</strong><br>
+                  • Pastoral notes automatically added to student record<br>
+                  • Behaviour points updated when incidents resolved<br>
+                  • Contact log entries for parent communications<br>
+                  • Medical alerts updated for mental health concerns<br>
+                  • Attendance monitoring flags for pattern analysis
+                </div>
+              </div>
+              <div>
+                <h4>Live Sync Status</h4>
+                <div style="background: white; padding: 1rem; border-radius: 6px; font-size: 0.875rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>📊 CPOMS Sync</span>
+                    <span style="color: #38a169; font-weight: bold;">✓ Active</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>💚 MyConcern Sync</span>
+                    <span style="color: #38a169; font-weight: bold;">✓ Active</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>📚 Google Classroom</span>
+                    <span style="color: #38a169; font-weight: bold;">✓ Active</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span>Last Sync</span>
+                    <span style="color: var(--text-light);">23 seconds ago</span>
+                  </div>
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                  <button class="button" onclick="syncToExistingSystems()" style="background: var(--safeshout-orange); font-size: 0.875rem; padding: 0.5rem 1rem; width: 100%;">Push Recent Reports to All Systems</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Support Tools -->
+          <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem;">🤖 AI Support Tools - Professional Decision Making</h3>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #fbbf24;">
+              <strong>⚠️ Important:</strong> AI provides data analysis and initial screening only. All safeguarding decisions remain with qualified DSL and trained professionals.
+            </div>
+            <div class="grid grid-2">
+              <div>
+                <h4>Initial Risk Scanning & Data Correlation</h4>
+                <div style="font-size: 0.9rem; opacity: 0.95; margin-top: 0.5rem;">
+                  • <strong>Automated keyword detection:</strong> Scans for high-risk terms<br>
+                  • <strong>Initial RAG suggestion:</strong> Based on content analysis<br>
+                  • <strong>Historical pattern identification:</strong> Links to previous incidents<br>
+                  • <strong>Cross-system data gathering:</strong> Pulls relevant SIMS/CPOMS data<br>
+                  • <strong>Urgent alert triggers:</strong> Flags for immediate DSL attention
+                </div>
+              </div>
+              <div>
+                <h4>Professional Review Required</h4>
+                <div style="font-size: 0.9rem; opacity: 0.95; margin-top: 0.5rem;">
+                  • <strong>DSL reviews AI RAG rating:</strong> Confirms or adjusts based on context<br>
+                  • <strong>Consent form selection:</strong> Professional chooses appropriate form<br>
+                  • <strong>Response strategy:</strong> DSL determines intervention approach<br>
+                  • <strong>Multi-agency decisions:</strong> Professional judgment on referrals<br>
+                  • <strong>Human oversight:</strong> All critical decisions require professional approval
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-time Data Flow -->
+          <div>
+            <h3>Real-time Data Processing Pipeline</h3>
+            <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div style="text-align: center; flex: 1;">
+                  <div style="width: 60px; height: 60px; background: #4a90e2; border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">API</div>
+                  <strong>Data Ingestion</strong><br>
+                  <small>Real-time feeds</small>
+                </div>
+                <div style="color: var(--safeshout-purple); font-size: 1.5rem;">→</div>
+                <div style="text-align: center; flex: 1;">
+                  <div style="width: 60px; height: 60px; background: var(--safeshout-orange); border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">AI</div>
+                  <strong>Pattern Analysis</strong><br>
+                  <small>Machine learning</small>
+                </div>
+                <div style="color: var(--safeshout-purple); font-size: 1.5rem;">→</div>
+                <div style="text-align: center; flex: 1;">
+                  <div style="width: 60px; height: 60px; background: #38a169; border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">⚡</div>
+                  <strong>Instant Alerts</strong><br>
+                  <small>Automated actions</small>
+                </div>
+              </div>
+              
+              <div style="background: white; padding: 1rem; border-radius: 6px;">
+                <strong>System Status Dashboard:</strong><br>
+                <div style="font-size: 0.875rem; margin-top: 0.5rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>📊 Data Integration</span>
+                    <span style="color: #38a169; font-weight: bold;">✓ Active</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>🔍 Pattern Recognition</span>
+                    <span style="color: #38a169; font-weight: bold;">✓ Running</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>⚡ Alert Processing</span>
+                    <span style="color: #38a169; font-weight: bold;">✓ Operational</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span>🎯 System Accuracy</span>
+                    <span style="color: #38a169; font-weight: bold;">Excellent</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consent Management Section -->
+    <div id="consent" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h2>Intelligent Consent Management & Fraser Gillick Assessment</h2>
+          <div>
+            <button class="button" onclick="processConsent()">Process New Case</button>
+            <button class="button" onclick="simulateConsentFlow()">Demo Full Workflow</button>
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- Fraser Gillick AI Assessment Engine -->
+          <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3>AI Fraser Gillick Assessment Engine</h3>
+            <div class="grid grid-2" style="margin-top: 1rem;">
+              <div style="background: #f0fff4; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #38a169;">
+                <h4 style="color: #38a169; margin-bottom: 1rem;">✓ Young Person Competent</h4>
+                <div style="font-size: 0.9rem;">
+                  <strong>AI Assessment Criteria:</strong><br>
+                  • Age: 14+ years (sufficient maturity baseline)<br>
+                  • Understanding: Demonstrated through report complexity<br>
+                  • Risk Level: Low-medium safeguarding concern<br>
+                  • Nature: Non-criminal, school-based issue<br>
+                  • Communication: Clear consequences awareness<br>
+                  • Emotional Maturity: Age-appropriate decision making<br><br>
+                  <strong>Legal Compliance:</strong> GDPR Article 8, Children Act 1989<br>
+                  <strong>Action:</strong> Consent form sent directly to student's secure portal
+                </div>
+              </div>
+
+              <div style="background: #fef3c7; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #d69e2e;">
+                <h4 style="color: #d69e2e; margin-bottom: 1rem;">⚠️ Parental Involvement Required</h4>
+                <div style="font-size: 0.9rem;">
+                  <strong>AI Risk Assessment Triggers:</strong><br>
+                  • Serious safeguarding concern detected<br>
+                  • Risk of significant harm identified<br>
+                  • Criminal activity suspected or reported<br>
+                  • Age below competency threshold (under 14)<br>
+                  • Complex family dynamics involved<br>
+                  • Multi-agency coordination required<br><br>
+                  <strong>Legal Override:</strong> Best interests assessment<br>
+                  <strong>Action:</strong> Consent routed to registered parents/carers
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Case Processing Examples -->
+          <div class="grid grid-2" style="margin-bottom: 2rem;">
+            <div>
+              <h3>Live Consent Case Processing</h3>
+              <div id="consentCases">
+                <div style="background: #f0fff4; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #38a169;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <strong>Case #SR-2024-156</strong>
+                    <span style="background: #38a169; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">Student Consent</span>
+                  </div>
+                  <div style="margin-bottom: 1rem;">
+                    <strong>Alex Thompson, 15 years</strong><br>
+                    <span style="color: var(--text-light);">Report: Peer pressure to skip classes</span>
+                  </div>
+                  <div style="background: white; padding: 1rem; border-radius: 6px; font-size: 0.875rem;">
+                    <strong>Professional Assessment:</strong> Student demonstrates maturity and understanding appropriate for age (15). Concern level assessed as requiring supportive intervention rather than immediate protection.<br><br>
+                    <strong>Consent Process:</strong> Digital consent form delivered to student's secure portal with appropriate support resources and DSL contact information.
+                  </div>
+                </div>
+
+                <div style="background: #fef3c7; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #d69e2e;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <strong>Case #SR-2024-157</strong>
+                    <span style="background: #d69e2e; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">Parental Consent</span>
+                  </div>
+                  <div style="margin-bottom: 1rem;">
+                    <strong>Jordan Smith, 13 years</strong><br>
+                    <span style="color: var(--text-light);">Report: Inappropriate adult contact outside school</span>
+                  </div>
+                  <div style="background: white; padding: 1rem; border-radius: 6px; font-size: 0.875rem;">
+                    <strong>AI Assessment Result:</strong> Serious safeguarding concern - potential grooming behavior detected through keyword analysis. Below competency threshold due to age (13) and complexity of safeguarding issue requiring adult intervention.<br><br>
+                    <strong>Consent Delivery:</strong> Urgent priority form sent to registered guardian sarah.smith@email.com with police liaison contact and immediate support activation.
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3>Automated Family Data Integration</h3>
+              <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <h4 style="color: var(--safeshout-purple); margin-bottom: 1rem;">Complete Family Profile Assembly</h4>
+                
+                <div style="background: #e6f3ff; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                  <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #4a90e2, #357abd); border-radius: 4px; margin-right: 0.5rem;"></div>
+                    <strong>SIMS/MIS Integration</strong>
+                  </div>
+                  <div style="font-size: 0.875rem;">
+                    • Automatic parent/carer contact lookup<br>
+                    • Emergency contact hierarchy retrieval<br>
+                    • Custody arrangements and legal guardianship<br>
+                    • Communication preferences (email/SMS/post)<br>
+                    • Previous consent history and preferences
+                  </div>
+                </div>
+
+                <div style="background: #f0fff4; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                  <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #50c878, #3d9970); border-radius: 4px; margin-right: 0.5rem;"></div>
+                    <strong>CPOMS Family Context</strong>
+                  </div>
+                  <div style="font-size: 0.875rem;">
+                    • Family safeguarding history and previous involvement<br>
+                    • Social services contact and case worker details<br>
+                    • Multi-agency team coordination requirements<br>
+                    • Special circumstances (e.g., domestic violence)<br>
+                    • Preferred communication methods and restrictions
+                  </div>
+                </div>
+
+                <div style="background: var(--bg-light); padding: 1rem; border-radius: 6px;">
+                  <strong>Example: Emily Johnson (Year 9) Family Profile</strong><br><br>
+                  <div style="font-size: 0.875rem;">
+                    <strong>Primary Contact:</strong> Sarah Johnson (Mother)<br>
+                    📧 sarah.johnson@email.com | 📱 +44 7700 900123<br>
+                    ✓ Primary consent recipient | Preferred contact method: Email<br><br>
+                    
+                    <strong>Secondary Contact:</strong> Michael Johnson (Father)<br>
+                    📧 m.johnson@company.com | 📱 +44 7700 900124<br>
+                    ⚠️ Emergency contact only (divorced parents - shared custody)<br><br>
+                    
+                    <strong>Additional Notes:</strong><br>
+                    • Grandmother (Patricia Johnson) as backup emergency contact<br>
+                    • Previous consent given for counselling services (Sept 2024)<br>
+                    • No social services involvement | No communication restrictions
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Digital Consent Workflow with Legal Compliance -->
+          <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1.5rem;">🔒 Secure Digital Consent Workflow</h3>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <div style="width: 50px; height: 50px; background: var(--safeshout-purple); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">1</div>
+                <h4>AI Assessment</h4>
+                <p style="font-size: 0.875rem; opacity: 0.9;">Fraser Gillick competency evaluation with risk assessment completed in 1.3 seconds</p>
+              </div>
+
+              <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <div style="width: 50px; height: 50px; background: #38a169; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">2</div>
+                <h4>Data Integration</h4>
+                <p style="font-size: 0.875rem; opacity: 0.9;">Automatic retrieval of student and family information from school management systems</p>
+              </div>
+
+              <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <div style="width: 50px; height: 50px; background: #d69e2e; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">3</div>
+                <h4>Form Generation</h4>
+                <p style="font-size: 0.875rem; opacity: 0.9;">Personalized consent form with case-specific legal requirements and safeguarding protocols</p>
+              </div>
+
+              <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <div style="width: 50px; height: 50px; background: #4a90e2; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">4</div>
+                <h4>Secure Delivery</h4>
+                <p style="font-size: 0.875rem; opacity: 0.9;">End-to-end encrypted delivery to appropriate party with multi-factor authentication</p>
+              </div>
+
+              <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <div style="width: 50px; height: 50px; background: var(--safeshout-orange); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">5</div>
+                <h4>Digital Signature</h4>
+                <p style="font-size: 0.875rem; opacity: 0.9;">Legally binding digital signing with identity verification and immutable timestamp</p>
+              </div>
+
+              <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                <div style="width: 50px; height: 50px; background: #50c878; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">6</div>
+                <h4>Case Activation</h4>
+                <p style="font-size: 0.875rem; opacity: 0.9;">Signed consent triggers automated support activation and multi-agency coordination</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legal Compliance & Security -->
+          <div class="grid grid-2">
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+              <h4 style="color: var(--safeshout-purple); margin-bottom: 1rem;">📚 Legal Compliance Framework</h4>
+              <div style="font-size: 0.9rem;">
+                <strong>Fraser Gillick Compliance:</strong><br>
+                • GDPR Article 8 (Child's consent in information society services)<br>
+                • Children Act 1989 (Welfare and best interests)<br>
+                • Mental Capacity Act considerations<br>
+                • Gillick v West Norfolk precedent adherence<br>
+                • Regular legal review and updates<br><br>
+                
+                <strong>Data Protection:</strong><br>
+                • ISO 27001 certified security protocols<br>
+                • Regular penetration testing and audits<br>
+                • GDPR Article 25 (Data protection by design)<br>
+                • Right to erasure and portability compliance
+              </div>
+            </div>
+            
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+              <h4 style="color: var(--safeshout-purple); margin-bottom: 1rem;">🔐 Security & Audit Trail</h4>
+              <div style="font-size: 0.9rem;">
+                <strong>Security Standards:</strong><br>
+                • End-to-end AES-256 encryption<br>
+                • Multi-factor authentication required<br>
+                • Digital signature validation (eIDAS compliant)<br>
+                • Immutable blockchain audit trail<br>
+                • Identity verification protocols<br><br>
+                
+                <strong>Audit & Monitoring:</strong><br>
+                • Complete consent form lifecycle tracking<br>
+                • Access logging and permission monitoring<br>
+                • Automated compliance reporting<br>
+                • Regular safeguarding audits and reviews
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maps Section -->
+    <div id="maps" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h2>Comprehensive Location Intelligence</h2>
+          <div>
+            <button class="button" onclick="switchToSchoolFloorplan()" id="floorplanBtn">School Floorplan</button>
+            <button class="button" onclick="switchToCommunityMap()" id="communityBtn">Community Map</button>
+            <button class="button" onclick="refreshMaps()">Refresh Data</button>
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- School Floorplan View -->
+          <div id="schoolFloorplan" style="display: block;">
+            <h3 style="margin-bottom: 1rem;">School Site: Internal Incident Mapping</h3>
+            <div style="background: white; border: 2px solid var(--border-color); border-radius: 8px; padding: 2rem; height: 400px; position: relative; overflow: hidden;">
+              <!-- School Floorplan SVG -->
+              <svg viewBox="0 0 800 400" style="width: 100%; height: 100%;">
+                <!-- Building outline -->
+                <rect x="50" y="50" width="700" height="300" fill="#f8f9fa" stroke="#2d3748" stroke-width="3"/>
+                
+                <!-- Rooms -->
+                <!-- Science Block -->
+                <rect x="60" y="60" width="200" height="120" fill="#fef2f2" stroke="#e53e3e" stroke-width="2"/>
+                <text x="160" y="125" text-anchor="middle" font-size="14" font-weight="bold">Science Block</text>
+                <circle cx="160" cy="150" r="20" fill="#e53e3e" opacity="0.8"/>
+                <text x="160" y="155" text-anchor="middle" font-size="12" fill="white" font-weight="bold">47</text>
+                
+                <!-- Main Corridor -->
+                <rect x="270" y="60" width="80" height="280" fill="#fef7ed" stroke="#dd6b20" stroke-width="2"/>
+                <text x="310" y="200" text-anchor="middle" font-size="14" font-weight="bold" transform="rotate(-90 310 200)">Main Corridor</text>
+                <circle cx="310" cy="220" r="15" fill="#dd6b20" opacity="0.8"/>
+                <text x="310" y="225" text-anchor="middle" font-size="10" fill="white" font-weight="bold">32</text>
+                
+                <!-- Sports Hall -->
+                <rect x="550" y="60" width="190" height="120" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                <text x="645" y="125" text-anchor="middle" font-size="14" font-weight="bold">Sports Hall</text>
+                <circle cx="645" cy="150" r="12" fill="#38a169" opacity="0.8"/>
+                <text x="645" y="155" text-anchor="middle" font-size="10" fill="white" font-weight="bold">18</text>
+                
+                <!-- Library -->
+                <rect x="360" y="60" width="180" height="100" fill="#e6fffa" stroke="#319795" stroke-width="2"/>
+                <text x="450" y="115" text-anchor="middle" font-size="14" font-weight="bold">Library</text>
+                <circle cx="450" cy="135" r="8" fill="#319795" opacity="0.8"/>
+                <text x="450" y="140" text-anchor="middle" font-size="9" fill="white" font-weight="bold">8</text>
+                
+                <!-- Canteen -->
+                <rect x="60" y="190" width="200" height="150" fill="#fffbf0" stroke="#f6ad55" stroke-width="2"/>
+                <text x="160" y="270" text-anchor="middle" font-size="14" font-weight="bold">Canteen</text>
+                <circle cx="160" cy="290" r="10" fill="#f6ad55" opacity="0.8"/>
+                <text x="160" y="295" text-anchor="middle" font-size="9" fill="white" font-weight="bold">12</text>
+                
+                <!-- Reception -->
+                <rect x="360" y="170" width="180" height="80" fill="#e6f3ff" stroke="#4a90e2" stroke-width="2"/>
+                <text x="450" y="215" text-anchor="middle" font-size="14" font-weight="bold">Reception</text>
+                <circle cx="450" cy="235" r="6" fill="#4a90e2" opacity="0.8"/>
+                <text x="450" y="239" text-anchor="middle" font-size="8" fill="white" font-weight="bold">3</text>
+                
+                <!-- Classrooms -->
+                <rect x="360" y="260" width="180" height="80" fill="#f7fafc" stroke="#a0aec0" stroke-width="2"/>
+                <text x="450" y="305" text-anchor="middle" font-size="14" font-weight="bold">Classrooms</text>
+                <circle cx="450" cy="320" r="7" fill="#a0aec0" opacity="0.8"/>
+                <text x="450" y="325" text-anchor="middle" font-size="8" fill="white" font-weight="bold">5</text>
+                
+                <!-- Toilets -->
+                <rect x="550" y="190" width="90" height="150" fill="#fdf2f8" stroke="#d53f8c" stroke-width="2"/>
+                <text x="595" y="270" text-anchor="middle" font-size="12" font-weight="bold" transform="rotate(-90 595 270)">Toilets</text>
+                <circle cx="595" cy="290" r="9" fill="#d53f8c" opacity="0.8"/>
+                <text x="595" y="295" text-anchor="middle" font-size="9" fill="white" font-weight="bold">14</text>
+                
+                <!-- Playground -->
+                <rect x="650" y="190" width="90" height="150" fill="#f0fff4" stroke="#48bb78" stroke-width="2"/>
+                <text x="695" y="270" text-anchor="middle" font-size="12" font-weight="bold" transform="rotate(-90 695 270)">Playground</text>
+                <circle cx="695" cy="290" r="11" fill="#48bb78" opacity="0.8"/>
+                <text x="695" y="295" text-anchor="middle" font-size="9" fill="white" font-weight="bold">21</text>
+                
+                <!-- Legend -->
+                <text x="60" y="30" font-size="12" font-weight="bold">Internal Incident Hotspots</text>
+                <circle cx="650" cy="25" r="8" fill="#e53e3e"/>
+                <text x="665" y="30" font-size="10">High Priority</text>
+                <circle cx="710" cy="25" r="8" fill="#dd6b20"/>
+                <text x="725" y="30" font-size="10">Medium</text>
+              </svg>
+            </div>
+          </div>
+          
+          <!-- Community Map View -->
+          <div id="communityMapView" style="display: none;">
+            <h3 style="margin-bottom: 1rem;">Community Area: External Safeguarding Intelligence</h3>
+            
+            <!-- Map Controls -->
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px 8px 0 0; padding: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+              <button onclick="zoomIn()" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 4px; cursor: pointer;">🔍 +</button>
+              <button onclick="zoomOut()" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 4px; cursor: pointer;">🔍 -</button>
+              <span style="margin: 0 1rem; color: #64748b;">Zoom: <span id="zoomLevel">100%</span></span>
+              <button onclick="toggleSatellite()" id="mapViewBtn" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 4px; cursor: pointer;">📡 Satellite</button>
+              <button onclick="toggleHeatmap()" id="heatmapBtn" style="background: var(--primary); color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">🔥 Heat Map</button>
+            </div>
+            
+            <!-- Interactive Map Container -->
+            <div id="mapContainer" style="background: white; border: 2px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; height: 500px; position: relative; overflow: hidden;">
+              <!-- Real OpenStreetMap -->
+              <div id="realMap" style="width: 100%; height: 100%; z-index: 1;"></div>
+            </div>
+            
+            <!-- Location Details Panel -->
+            <div id="locationDetails" style="display: none; background: white; border: 2px solid var(--border-color); border-radius: 8px; margin-top: 1rem; padding: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4 id="locationTitle">Location Details</h4>
+                <button onclick="closeLocationDetails()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+              </div>
+              <div id="locationContent"></div>
+            </div>
+          </div>
+          
+          <!-- Incident Analysis Dashboard -->
+          <div style="margin-top: 2rem;">
+            <div class="grid grid-2">
+              <div>
+                <h3>School Site Analysis</h3>
+                <div class="grid grid-2" style="gap: 1rem; margin-top: 1rem;">
+                  <div style="text-align: center; padding: 1rem; background: #fef2f2; border-radius: 8px; border-left: 4px solid #e53e3e;">
+                    <div style="color: #e53e3e; font-weight: bold; font-size: 1.5rem;">47</div>
+                    <div><strong>Science Block</strong></div>
+                    <small>Bullying hotspot - High Priority</small>
+                  </div>
+                  <div style="text-align: center; padding: 1rem; background: #fef7ed; border-radius: 8px; border-left: 4px solid #dd6b20;">
+                    <div style="color: #dd6b20; font-weight: bold; font-size: 1.5rem;">32</div>
+                    <div><strong>Main Corridor</strong></div>
+                    <small>Social issues - Medium Priority</small>
+                  </div>
+                  <div style="text-align: center; padding: 1rem; background: #fdf2f8; border-radius: 8px; border-left: 4px solid #d53f8c;">
+                    <div style="color: #d53f8c; font-weight: bold; font-size: 1.5rem;">14</div>
+                    <div><strong>Toilets</strong></div>
+                    <small>Privacy concerns - Medium Priority</small>
+                  </div>
+                  <div style="text-align: center; padding: 1rem; background: #f0fff4; border-radius: 8px; border-left: 4px solid #38a169;">
+                    <div style="color: #38a169; font-weight: bold; font-size: 1.5rem;">18</div>
+                    <div><strong>Sports Hall</strong></div>
+                    <small>Body image issues - Low Priority</small>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3>Community Intelligence</h3>
+                <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px;">
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span><strong>Town Centre</strong></span>
+                      <span style="color: #e53e3e; font-weight: bold;">31 reports</span>
+                    </div>
+                    <small>Substance misuse, gang recruitment</small>
+                  </div>
+                  
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span><strong>Local Park</strong></span>
+                      <span style="color: #e53e3e; font-weight: bold;">24 reports</span>
+                    </div>
+                    <small>Online grooming, inappropriate contact</small>
+                  </div>
+                  
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span><strong>Bus Routes</strong></span>
+                      <span style="color: #dd6b20; font-weight: bold;">18 reports</span>
+                    </div>
+                    <small>Travel safety, harassment</small>
+                  </div>
+                  
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span><strong>Shopping Centre</strong></span>
+                      <span style="color: #dd6b20; font-weight: bold;">12 reports</span>
+                    </div>
+                    <small>Criminal exploitation, theft</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- AI Pattern Recognition -->
+          <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+            <h3 style="margin-bottom: 1rem;">🤖 Location-Based AI Insights</h3>
+            <div class="grid grid-2">
+              <div>
+                <h4>Internal Pattern Analysis</h4>
+                <div style="font-size: 0.9rem; opacity: 0.95; margin-top: 0.5rem;">
+                  • Science Block incidents peak during Period 3 (10:30-11:15)<br>
+                  • Corridor issues correlate with lesson transitions<br>
+                  • Toilet incidents show seasonal variation (winter peak)<br>
+                  • Sports Hall concerns align with PE timetable<br>
+                  • 73% of incidents involve same Year 9 cohort
+                </div>
+              </div>
+              <div>
+                <h4>External Threat Assessment</h4>
+                <div style="font-size: 0.9rem; opacity: 0.95; margin-top: 0.5rem;">
+                  • Town Centre reports spike during school holidays<br>
+                  • Park incidents peak between 3:30-5:00 PM<br>
+                  • Bus route safety concerns on Routes 47 & 23<br>
+                  • Shopping centre exploitation attempts increasing<br>
+                  • Multi-agency coordination active for 8 cases
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div id="analytics" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h2>Comprehensive Analytics Dashboard</h2>
+          <div>
+            <button class="button" onclick="generateInsights()">Generate AI Insights</button>
+            <button class="button" onclick="exportAnalytics()">Export Report</button>
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- Key Performance Metrics -->
+          <div class="grid grid-4" style="gap: 1rem; margin-bottom: 2rem;">
+            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 8px;">
+              <div style="font-size: 2.5rem; font-weight: bold;">247</div>
+              <div>Total Reports This Term</div>
+              <small style="opacity: 0.9;">↑ 23% from last term</small>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border-radius: 8px;">
+              <div style="font-size: 2.5rem; font-weight: bold;">87%</div>
+              <div>Resolution Satisfaction</div>
+              <small style="opacity: 0.9;">Student feedback score</small>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border-radius: 8px;">
+              <div style="font-size: 2.5rem; font-weight: bold;">4.2h</div>
+              <div>Average Response Time</div>
+              <small style="opacity: 0.9;">↓ 18% improvement</small>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #fa709a, #fee140); color: white; border-radius: 8px;">
+              <div style="font-size: 2.5rem; font-weight: bold;">67%</div>
+              <div>Anonymous Reports</div>
+              <small style="opacity: 0.9;">33% named reports</small>
+            </div>
+          </div>
+
+          <!-- Concerns by Type of Harm -->
+          <div class="grid grid-2" style="margin-bottom: 2rem;">
+            <div>
+              <h3>Concerns by Type of Harm</h3>
+              <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px;">
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Bullying & Harassment</strong></span>
+                    <span style="color: #e53e3e; font-weight: bold;">89 reports (36%)</span>
+                  </div>
+                  <div style="background: #e53e3e; height: 8px; border-radius: 4px; margin-bottom: 0.25rem;"></div>
+                  <small>Physical: 34, Verbal: 31, Cyber: 24</small>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Mental Health & Wellbeing</strong></span>
+                    <span style="color: #dd6b20; font-weight: bold;">67 reports (27%)</span>
+                  </div>
+                  <div style="background: #dd6b20; height: 8px; border-radius: 4px; width: 75%; margin-bottom: 0.25rem;"></div>
+                  <small>Anxiety: 28, Depression: 21, Self-harm: 18</small>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Online Safety</strong></span>
+                    <span style="color: #38a169; font-weight: bold;">43 reports (17%)</span>
+                  </div>
+                  <div style="background: #38a169; height: 8px; border-radius: 4px; width: 48%; margin-bottom: 0.25rem;"></div>
+                  <small>Grooming: 16, Inappropriate content: 15, Cyberbullying: 12</small>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Family & Home Issues</strong></span>
+                    <span style="color: #319795; font-weight: bold;">29 reports (12%)</span>
+                  </div>
+                  <div style="background: #319795; height: 8px; border-radius: 4px; width: 33%; margin-bottom: 0.25rem;"></div>
+                  <small>Domestic violence: 12, Neglect: 10, Financial stress: 7</small>
+                </div>
+                
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Other Concerns</strong></span>
+                    <span style="color: #805ad5; font-weight: bold;">19 reports (8%)</span>
+                  </div>
+                  <div style="background: #805ad5; height: 8px; border-radius: 4px; width: 22%; margin-bottom: 0.25rem;"></div>
+                  <small>Substance misuse: 8, Theft: 6, Other: 5</small>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3>Student Satisfaction with Response</h3>
+              <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px;">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                  <div style="font-size: 3rem; font-weight: bold; color: #38a169;">87%</div>
+                  <div style="color: var(--text-light);">Overall Satisfaction Rate</div>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Very Satisfied</span>
+                    <span style="font-weight: bold; color: #38a169;">62%</span>
+                  </div>
+                  <div style="background: #38a169; height: 6px; border-radius: 3px; width: 62%;"></div>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Satisfied</span>
+                    <span style="font-weight: bold; color: #48bb78;">25%</span>
+                  </div>
+                  <div style="background: #48bb78; height: 6px; border-radius: 3px; width: 25%;"></div>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Neutral</span>
+                    <span style="font-weight: bold; color: #ed8936;">8%</span>
+                  </div>
+                  <div style="background: #ed8936; height: 6px; border-radius: 3px; width: 8%;"></div>
+                </div>
+                
+                <div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Dissatisfied</span>
+                    <span style="font-weight: bold; color: #e53e3e;">5%</span>
+                  </div>
+                  <div style="background: #e53e3e; height: 6px; border-radius: 3px; width: 5%;"></div>
+                </div>
+                
+                <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+                  <strong>Key Feedback Themes:</strong><br>
+                  <small>• "Felt heard and supported" (78%)<br>
+                  • "Quick response time" (71%)<br>
+                  • "Appropriate action taken" (69%)<br>
+                  • "Would use SafeShout again" (84%)</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Emotional Journey Analytics -->
+          <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3>Emotional Journey Analytics</h3>
+            <div class="grid grid-2" style="margin-top: 1rem;">
+              <div>
+                <h4>Emotions When Reporting</h4>
+                <div style="background: white; padding: 1rem; border-radius: 6px;">
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😰 Scared/Anxious</span>
+                      <span style="font-weight: bold; color: #e53e3e;">34%</span>
+                    </div>
+                    <div style="background: #e53e3e; height: 6px; border-radius: 3px; margin-bottom: 0.25rem;"></div>
+                    <small>Most common in bullying and online safety reports</small>
+                  </div>
+                  
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😢 Sad/Upset</span>
+                      <span style="font-weight: bold; color: #dd6b20;">28%</span>
+                    </div>
+                    <div style="background: #dd6b20; height: 6px; border-radius: 3px; width: 82%; margin-bottom: 0.25rem;"></div>
+                    <small>Prevalent in family issues and mental health concerns</small>
+                  </div>
+                  
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😡 Angry/Frustrated</span>
+                      <span style="font-weight: bold; color: #805ad5;">18%</span>
+                    </div>
+                    <div style="background: #805ad5; height: 6px; border-radius: 3px; width: 53%; margin-bottom: 0.25rem;"></div>
+                    <small>Higher in harassment and unfair treatment reports</small>
+                  </div>
+                  
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😕 Confused/Lost</span>
+                      <span style="font-weight: bold; color: #319795;">12%</span>
+                    </div>
+                    <div style="background: #319795; height: 6px; border-radius: 3px; width: 35%; margin-bottom: 0.25rem;"></div>
+                    <small>Common in first-time reporters and complex situations</small>
+                  </div>
+                  
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😌 Relieved to Report</span>
+                      <span style="font-weight: bold; color: #38a169;">8%</span>
+                    </div>
+                    <div style="background: #38a169; height: 6px; border-radius: 3px; width: 24%; margin-bottom: 0.25rem;"></div>
+                    <small>Students who felt empowered to speak out</small>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4>Emotions After Resolution</h4>
+                <div style="background: white; padding: 1rem; border-radius: 6px;">
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😊 Happy/Satisfied</span>
+                      <span style="font-weight: bold; color: #38a169;">41%</span>
+                    </div>
+                    <div style="background: #38a169; height: 6px; border-radius: 3px; margin-bottom: 0.25rem;"></div>
+                    <small>Successful intervention with positive outcome</small>
+                  </div>
+                  
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😌 Relieved/Supported</span>
+                      <span style="font-weight: bold; color: #48bb78;">32%</span>
+                    </div>
+                    <div style="background: #48bb78; height: 6px; border-radius: 3px; width: 78%; margin-bottom: 0.25rem;"></div>
+                    <small>Felt heard and appropriately supported</small>
+                  </div>
+                  
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😐 Neutral/Ongoing</span>
+                      <span style="font-weight: bold; color: #ed8936;">15%</span>
+                    </div>
+                    <div style="background: #ed8936; height: 6px; border-radius: 3px; width: 37%; margin-bottom: 0.25rem;"></div>
+                    <small>Support in place but situation still developing</small>
+                  </div>
+                  
+                  <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>💪 Empowered/Confident</span>
+                      <span style="font-weight: bold; color: #4a90e2;">8%</span>
+                    </div>
+                    <div style="background: #4a90e2; height: 6px; border-radius: 3px; width: 20%; margin-bottom: 0.25rem;"></div>
+                    <small>Gained skills and confidence to handle future issues</small>
+                  </div>
+                  
+                  <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <span>😟 Still Concerned</span>
+                      <span style="font-weight: bold; color: #e53e3e;">4%</span>
+                    </div>
+                    <div style="background: #e53e3e; height: 6px; border-radius: 3px; width: 10%; margin-bottom: 0.25rem;"></div>
+                    <small>Require additional follow-up and support</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
+              <h4 style="margin-bottom: 1rem;">Emotional Transformation Impact</h4>
+              <div class="grid grid-3" style="text-align: center;">
+                <div>
+                  <div style="font-size: 2rem; font-weight: bold;">73%</div>
+                  <div style="font-size: 0.9rem;">Positive emotional shift from reporting to resolution</div>
+                </div>
+                <div>
+                  <div style="font-size: 2rem; font-weight: bold;">89%</div>
+                  <div style="font-size: 0.9rem;">Would feel comfortable reporting again in future</div>
+                </div>
+                <div>
+                  <div style="font-size: 2rem; font-weight: bold;">92%</div>
+                  <div style="font-size: 0.9rem;">Would recommend SafeShout to friends facing concerns</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Anonymous vs Named Reporting Analysis -->
+          <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3>Anonymous vs Named Reporting Analysis</h3>
+            <div class="grid grid-3" style="margin-top: 1rem;">
+              <div style="text-align: center; padding: 1rem; background: #fef3c7; border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: bold; color: #d69e2e;">165</div>
+                <div><strong>Anonymous Reports</strong></div>
+                <div style="color: var(--text-light); font-size: 0.875rem;">67% of total</div>
+                <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+                  Most common: Bullying (45%), Mental health (23%), Online safety (18%)
+                </div>
+              </div>
+              <div style="text-align: center; padding: 1rem; background: #e6f3ff; border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: bold; color: #4a90e2;">82</div>
+                <div><strong>Named Reports</strong></div>
+                <div style="color: var(--text-light); font-size: 0.875rem;">33% of total</div>
+                <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+                  Most common: Family issues (34%), Academic stress (28%), Peer conflicts (21%)
+                </div>
+              </div>
+              <div style="text-align: center; padding: 1rem; background: #f0fff4; border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: bold; color: #38a169;">23</div>
+                <div><strong>Identity Revealed</strong></div>
+                <div style="color: var(--text-light); font-size: 0.875rem;">14% of anonymous</div>
+                <div style="margin-top: 0.5rem; font-size: 0.75rem;">
+                  Students chose to reveal identity for additional support
+                </div>
+              </div>
+            </div>
+            
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+              <strong>Reporting Patterns:</strong><br>
+              <div class="grid grid-2" style="font-size: 0.875rem; margin-top: 0.5rem;">
+                <div>
+                  • Anonymous reports peak: Monday mornings & Friday afternoons<br>
+                  • Named reports: More consistent throughout the week<br>
+                  • Identity reveals typically occur within 48 hours
+                </div>
+                <div>
+                  • Higher anonymous rate during exam periods (78%)<br>
+                  • Named reports increase after safeguarding assemblies<br>
+                  • Anonymous satisfaction rate: 89% vs Named: 84%
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Integrated Location Analytics -->
+          <div class="grid grid-2" style="margin-bottom: 2rem;">
+            <div>
+              <h3>School Site Incident Mapping</h3>
+              <div style="background: white; border-radius: 8px; padding: 1rem; height: 300px; position: relative;">
+                <!-- Simplified School Heatmap -->
+                <svg viewBox="0 0 400 250" style="width: 100%; height: 100%;">
+                  <rect x="20" y="20" width="360" height="210" fill="#f8f9fa" stroke="#2d3748" stroke-width="2"/>
+                  
+                  <!-- Science Block - Hotspot -->
+                  <rect x="30" y="30" width="100" height="60" fill="#fef2f2" stroke="#e53e3e" stroke-width="2"/>
+                  <text x="80" y="65" text-anchor="middle" font-size="12" font-weight="bold">Science Block</text>
+                  <circle cx="80" cy="80" r="12" fill="#e53e3e"/>
+                  <text x="80" y="85" text-anchor="middle" font-size="10" fill="white" font-weight="bold">47</text>
+                  
+                  <!-- Main Corridor -->
+                  <rect x="140" y="30" width="40" height="180" fill="#fef7ed" stroke="#dd6b20" stroke-width="2"/>
+                  <text x="160" y="125" text-anchor="middle" font-size="10" font-weight="bold" transform="rotate(-90 160 125)">Corridor</text>
+                  <circle cx="160" cy="140" r="8" fill="#dd6b20"/>
+                  <text x="160" y="145" text-anchor="middle" font-size="9" fill="white" font-weight="bold">32</text>
+                  
+                  <!-- Other areas -->
+                  <rect x="190" y="30" width="80" height="60" fill="#e6fffa" stroke="#319795" stroke-width="2"/>
+                  <text x="230" y="65" text-anchor="middle" font-size="12" font-weight="bold">Library</text>
+                  <circle cx="230" cy="80" r="6" fill="#319795"/>
+                  
+                  <rect x="280" y="30" width="90" height="60" fill="#f0fff4" stroke="#38a169" stroke-width="2"/>
+                  <text x="325" y="65" text-anchor="middle" font-size="12" font-weight="bold">Sports Hall</text>
+                  <circle cx="325" cy="80" r="8" fill="#38a169"/>
+                  
+                  <rect x="30" y="100" width="100" height="110" fill="#fffbf0" stroke="#f6ad55" stroke-width="2"/>
+                  <text x="80" y="160" text-anchor="middle" font-size="12" font-weight="bold">Canteen</text>
+                  <circle cx="80" cy="180" r="7" fill="#f6ad55"/>
+                </svg>
+              </div>
+              
+              <div style="background: var(--bg-light); padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+                <strong>Internal Hotspot Analysis:</strong><br>
+                <div style="font-size: 0.875rem; margin-top: 0.5rem;">
+                  • Science Block: 47 reports (19%) - Bullying concentration<br>
+                  • Main Corridor: 32 reports (13%) - Social exclusion issues<br>
+                  • Sports Areas: 18 reports (7%) - Body image concerns<br>
+                  • Toilets: 14 reports (6%) - Privacy/harassment issues
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3>Community Area Intelligence</h3>
+              <div style="background: white; border-radius: 8px; padding: 1rem;">
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Town Centre</strong></span>
+                    <span style="color: #e53e3e; font-weight: bold;">31 reports</span>
+                  </div>
+                  <div style="background: #e53e3e; height: 6px; border-radius: 3px; margin-bottom: 0.25rem;"></div>
+                  <small>Substance misuse (45%), Gang recruitment (32%), Theft (23%)</small>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Local Park</strong></span>
+                    <span style="color: #e53e3e; font-weight: bold;">24 reports</span>
+                  </div>
+                  <div style="background: #e53e3e; height: 6px; border-radius: 3px; width: 77%; margin-bottom: 0.25rem;"></div>
+                  <small>Online grooming (42%), Inappropriate contact (33%), Vandalism (25%)</small>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Bus Routes 47 & 23</strong></span>
+                    <span style="color: #dd6b20; font-weight: bold;">18 reports</span>
+                  </div>
+                  <div style="background: #dd6b20; height: 6px; border-radius: 3px; width: 58%; margin-bottom: 0.25rem;"></div>
+                  <small>Travel harassment (61%), Inappropriate behavior (39%)</small>
+                </div>
+                
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span><strong>Shopping Centre</strong></span>
+                    <span style="color: #38a169; font-weight: bold;">12 reports</span>
+                  </div>
+                  <div style="background: #38a169; height: 6px; border-radius: 3px; width: 39%; margin-bottom: 0.25rem;"></div>
+                  <small>Criminal exploitation (50%), Shoplifting pressure (50%)</small>
+                </div>
+              </div>
+              
+              <div style="background: var(--bg-light); padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+                <strong>Community Risk Trends:</strong><br>
+                <div style="font-size: 0.875rem; margin-top: 0.5rem;">
+                  • Peak times: 3:30-5:00 PM (after school)<br>
+                  • Weekend incidents: 67% higher in town centre<br>
+                  • Multi-agency responses: 8 active cases<br>
+                  • Police liaison: Weekly coordination meetings
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- AI Predictive Insights -->
+          <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 2rem; border-radius: 12px;">
+            <h3 style="margin-bottom: 1rem;">🤖 AI-Powered Predictive Analytics</h3>
+            <div class="grid grid-2">
+              <div>
+                <h4>Next Week Forecast</h4>
+                <div style="font-size: 0.9rem; opacity: 0.95; margin-top: 0.5rem;">
+                  • 73% probability of Science Block incident (Tuesday-Wednesday)<br>
+                  • Mental health reports likely to increase 23% (exam stress)<br>
+                  • Anonymous reporting expected to peak Thursday PM<br>
+                  • Community incidents: Town centre risk elevated (Friday evening)
+                </div>
+              </div>
+              <div>
+                <h4>Intervention Recommendations</h4>
+                <div style="font-size: 0.9rem; opacity: 0.95; margin-top: 0.5rem;">
+                  • Increase Science Block supervision during break periods<br>
+                  • Schedule wellbeing assembly for Year 9 cohort<br>
+                  • Activate peer mentoring program in identified hotspots<br>
+                  • Coordinate with police for Friday evening town patrols
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Professional Actions Section -->
+    <div id="actions" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h2>Professional Response Dashboard</h2>
+          <div>
+            <button class="button" onclick="processNewAction()">New Response Action</button>
+            <button class="button" onclick="refreshActionQueue()">Refresh Queue</button>
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- RAG Rating Filter -->
+          <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3>Active Cases by Risk Rating</h3>
+            <div class="grid grid-3" style="margin-top: 1rem;">
+              <div style="text-align: center; padding: 1rem; background: #fef2f2; border-radius: 8px; cursor: pointer;" onclick="filterByRating('red')">
+                <div style="color: #e53e3e; font-weight: bold; font-size: 2rem;">🔴 7</div>
+                <div><strong>RED - Critical</strong></div>
+                <small>Immediate action required</small>
+              </div>
+              <div style="text-align: center; padding: 1rem; background: #fef7ed; border-radius: 8px; cursor: pointer;" onclick="filterByRating('amber')">
+                <div style="color: #dd6b20; font-weight: bold; font-size: 2rem;">🟡 23</div>
+                <div><strong>AMBER - High</strong></div>
+                <small>Action within 24 hours</small>
+              </div>
+              <div style="text-align: center; padding: 1rem; background: #f0fff4; border-radius: 8px; cursor: pointer;" onclick="filterByRating('green')">
+                <div style="color: #38a169; font-weight: bold; font-size: 2rem;">🟢 45</div>
+                <div><strong>GREEN - Standard</strong></div>
+                <small>Routine follow-up</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- RED Rating Cases - Critical -->
+          <div id="redCases">
+            <h3 style="color: #e53e3e; margin-bottom: 1rem;">🔴 RED - Critical Priority Cases</h3>
+            
+            <div style="background: #fef2f2; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #e53e3e;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                  <strong>Case #SR-2024-247 - NAMED REPORT</strong><br>
+                  <span style="color: var(--text-light);">Emma Clarke, Year 8 - Serious physical assault</span>
+                </div>
+                <div style="text-align: right;">
+                  <span style="background: #e53e3e; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">URGENT</span><br>
+                  <small>Reported: 09:15 AM</small>
+                </div>
+              </div>
+              <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <strong>Immediate Actions Required:</strong><br>
+                • Police notification sent (09:18 AM)<br>
+                • Parents contacted for immediate collection<br>
+                • Medical assessment arranged<br>
+                • Witness statements being collected<br>
+                • Perpetrator suspended pending investigation
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="button" style="background: #e53e3e; font-size: 0.875rem; padding: 0.5rem 1rem;">Update Status</button>
+                <button class="button" style="background: #1a365d; font-size: 0.875rem; padding: 0.5rem 1rem;">Contact Police</button>
+                <button class="button" style="background: #7c2d12; font-size: 0.875rem; padding: 0.5rem 1rem;">Medical Support</button>
+              </div>
+            </div>
+
+            <div style="background: #fef2f2; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #e53e3e;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                  <strong>Case #SR-2024-245 - ANONYMOUS REPORT</strong><br>
+                  <span style="color: var(--text-light);">Identity Protected - Child sexual exploitation concern</span>
+                </div>
+                <div style="text-align: right;">
+                  <span style="background: #e53e3e; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">CSE ALERT</span><br>
+                  <small>Reported: 08:45 AM</small>
+                </div>
+              </div>
+              <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <strong>Multi-Agency Response Active:</strong><br>
+                • MASH referral submitted (08:50 AM)<br>
+                • Police child protection unit notified<br>
+                • Social services emergency assessment<br>
+                • School safeguarding team briefed<br>
+                • Identity protection protocols activated
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="button" style="background: #e53e3e; font-size: 0.875rem; padding: 0.5rem 1rem;">Record LADO Contact</button>
+                <button class="button" style="background: #7c2d12; font-size: 0.875rem; padding: 0.5rem 1rem;">Log External Agency Action</button>
+                <button class="button" style="background: #059669; font-size: 0.875rem; padding: 0.5rem 1rem;">Update Risk Assessment</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AMBER Rating Cases - High Priority -->
+          <div id="amberCases" style="margin-top: 2rem;">
+            <h3 style="color: #dd6b20; margin-bottom: 1rem;">🟡 AMBER - High Priority Cases</h3>
+            
+            <div style="background: #fef7ed; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #dd6b20;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                  <strong>Case #SR-2024-243 - NAMED REPORT</strong><br>
+                  <span style="color: var(--text-light);">Jordan Williams, Year 10 - Persistent bullying</span>
+                </div>
+                <div style="text-align: right;">
+                  <span style="background: #dd6b20; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">24H TARGET</span><br>
+                  <small>Reported: Yesterday 2:30 PM</small>
+                </div>
+              </div>
+              <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <strong>Action Plan in Progress:</strong><br>
+                • Restorative justice session scheduled (Tomorrow 10 AM)<br>
+                • Parent meeting arranged for Thursday<br>
+                • Peer support mentor assigned<br>
+                • Counselling support offered and accepted<br>
+                • Perpetrator group intervention planned
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="button" style="background: #dd6b20; font-size: 0.875rem; padding: 0.5rem 1rem;">Schedule Meeting</button>
+                <button class="button" style="background: #059669; font-size: 0.875rem; padding: 0.5rem 1rem;">Counselling</button>
+                <button class="button" style="background: #4a90e2; font-size: 0.875rem; padding: 0.5rem 1rem;">Parent Contact</button>
+              </div>
+            </div>
+
+            <div style="background: #fef7ed; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #dd6b20;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                  <strong>Case #SR-2024-241 - ANONYMOUS REPORT</strong><br>
+                  <span style="color: var(--text-light);">Identity Protected - Online grooming suspected</span>
+                </div>
+                <div style="text-align: right;">
+                  <span style="background: #dd6b20; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">DIGITAL THREAT</span><br>
+                  <small>Reported: Yesterday 4:15 PM</small>
+                </div>
+              </div>
+              <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <strong>Digital Safety Response:</strong><br>
+                • Cyber crime unit consultation arranged<br>
+                • Digital forensics preservation initiated<br>
+                • Online safety assembly planned for Year 9<br>
+                • Parent information session scheduled<br>
+                • Anonymous follow-up pathway established
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="button" style="background: #dd6b20; font-size: 0.875rem; padding: 0.5rem 1rem;">Record Police Contact</button>
+                <button class="button" style="background: #1a365d; font-size: 0.875rem; padding: 0.5rem 1rem;">Log Evidence Actions</button>
+                <button class="button" style="background: #059669; font-size: 0.875rem; padding: 0.5rem 1rem;">Plan Safety Education</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GREEN Rating Cases - Standard Priority -->
+          <div id="greenCases" style="margin-top: 2rem;">
+            <h3 style="color: #38a169; margin-bottom: 1rem;">🟢 GREEN - Standard Priority Cases</h3>
+            
+            <div style="background: #f0fff4; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #38a169;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                  <strong>Case #SR-2024-238 - NAMED REPORT</strong><br>
+                  <span style="color: var(--text-light);">Sophie Chen, Year 7 - Friendship difficulties</span>
+                </div>
+                <div style="text-align: right;">
+                  <span style="background: #38a169; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">ROUTINE</span><br>
+                  <small>Reported: 3 days ago</small>
+                </div>
+              </div>
+              <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <strong>Support Plan Active:</strong><br>
+                • Weekly check-ins with form tutor<br>
+                • Social skills group participation<br>
+                • Friendship mentor buddy system<br>
+                • Parents informed and supportive<br>
+                • Progress monitoring weekly
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="button" style="background: #38a169; font-size: 0.875rem; padding: 0.5rem 1rem;">Weekly Check</button>
+                <button class="button" style="background: #059669; font-size: 0.875rem; padding: 0.5rem 1rem;">Social Group</button>
+                <button class="button" style="background: #4a90e2; font-size: 0.875rem; padding: 0.5rem 1rem;">Parent Update</button>
+              </div>
+            </div>
+
+            <div style="background: #f0fff4; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #38a169;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                  <strong>Case #SR-2024-235 - ANONYMOUS REPORT</strong><br>
+                  <span style="color: var(--text-light);">Identity Protected - Academic stress concerns</span>
+                </div>
+                <div style="text-align: right;">
+                  <span style="background: #38a169; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">WELLBEING</span><br>
+                  <small>Reported: 5 days ago</small>
+                </div>
+              </div>
+              <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <strong>Wellbeing Support Available:</strong><br>
+                • Study skills workshop series promoted<br>
+                • Wellbeing drop-in sessions advertised<br>
+                • Exam stress guidance resources shared<br>
+                • Anonymous feedback mechanism active<br>
+                • Year group stress monitoring increased
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="button" style="background: #38a169; font-size: 0.875rem; padding: 0.5rem 1rem;">Study Skills</button>
+                <button class="button" style="background: #059669; font-size: 0.875rem; padding: 0.5rem 1rem;">Wellbeing</button>
+                <button class="button" style="background: #4a90e2; font-size: 0.875rem; padding: 0.5rem 1rem;">Monitor</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- DSL Decision Authority -->
+          <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-top: 2rem; border-left: 4px solid var(--safeshout-purple);">
+            <h3 style="color: var(--safeshout-purple); margin-bottom: 1rem;">👩‍💼 DSL Authority & Decision Making</h3>
+            <div class="grid grid-2">
+              <div>
+                <h4>AI Streamlines Process</h4>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                  • Intelligent case triage and RAG rating<br>
+                  • Automatic risk assessment and priority scoring<br>
+                  • Suggested intervention pathways and resources<br>
+                  • Multi-agency contact recommendations<br>
+                  • Evidence compilation and timeline creation
+                </div>
+              </div>
+              <div>
+                <h4>DSL Makes Final Decisions</h4>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                  • Approves or modifies AI recommendations<br>
+                  • Assigns specific staff to case actions<br>
+                  • Authorizes external agency involvement<br>
+                  • Determines intervention escalation levels<br>
+                  • Signs off on case closure and outcomes
+                </div>
+              </div>
+            </div>
+            
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+              <strong>Current DSL: Mrs Roberts</strong> | <span style="color: #38a169;">✓ Online</span><br>
+              <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                <button class="button" style="background: var(--safeshout-purple); font-size: 0.875rem; padding: 0.5rem 1rem;">Assign Case</button>
+                <button class="button" style="background: #1a365d; font-size: 0.875rem; padding: 0.5rem 1rem;">Override AI</button>
+                <button class="button" style="background: #059669; font-size: 0.875rem; padding: 0.5rem 1rem;">Approve Action</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Statistics -->
+          <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+            <h3 style="margin-bottom: 1rem;">📊 Professional Response Metrics</h3>
+            <div class="grid grid-2">
+              <div>
+                <h4>Response Times by Priority</h4>
+                <div style="font-size: 0.9rem; opacity: 0.95; margin-top: 0.5rem;">
+                  • RED (Critical): Average 8 minutes to DSL decision<br>
+                  • AMBER (High): Average 2.3 hours to intervention approval<br>
+                  • GREEN (Standard): Average 24 hours to assignment<br>
+                  • DSL override rate: 6% (excellent AI accuracy)<br>
+                  • Multi-agency coordination: 97% success rate
+                </div>
+              </div>
+              <div>
+                <h4>Professional Development Impact</h4>
+                <div style="font-size: 0.9rem; opacity: 0.95; margin-top: 0.5rem;">
+                  • DSL confidence in AI recommendations: 94%<br>
+                  • Staff efficiency improved: 67%<br>
+                  • Decision-making accuracy: 91%<br>
+                  • Workload distribution: 89% optimized<br>
+                  • Training requirements identified: 100%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- School Branding Section -->
+    <div id="branding" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h2>School Branding Customization</h2>
+          <button class="button" onclick="updateBranding()">Apply Changes</button>
+        </div>
+        <div class="card-content">
+          <div class="grid grid-2">
+            <div>
+              <h3>Branding Controls</h3>
+              <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px;">
+                <div style="margin-bottom: 1rem;">
+                  <label>School Name</label><br>
+                  <input type="text" value="Riverside Academy" style="width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                  <label>Primary Color</label><br>
+                  <input type="color" value="#1a365d" style="width: 60px; height: 40px; margin-top: 0.25rem; border: none; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                  <label>Welcome Message</label><br>
+                  <textarea style="width: 100%; height: 80px; margin-top: 0.25rem; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px;">Your voice matters. Report any concerns safely and confidentially.</textarea>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3>Live Preview</h3>
+              <div style="border: 2px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #1a365d, #4299e1); color: white; padding: 1rem; text-align: center;">
+                  <h3>Riverside Academy</h3>
+                  <small>SafeShout Integration</small>
+                </div>
+                <div style="padding: 1rem;">
+                  <h4 style="color: #1a365d;">Report a Concern</h4>
+                  <p style="font-size: 0.9rem; margin: 0.5rem 0;">Your voice matters. Report any concerns safely and confidentially.</p>
+                  <button style="background: #1a365d; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; margin-right: 0.5rem;">Anonymous</button>
+                  <button style="background: transparent; color: #1a365d; border: 1px solid #1a365d; padding: 0.5rem 1rem; border-radius: 4px;">Named</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    let map;
+    
+    function showTab(tabName) {
+      // Hide all sections
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+      
+      // Remove active class from all tabs
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected section
+      document.getElementById(tabName).classList.add('active');
+      
+      // Add active class to clicked tab
+      event.target.closest('.nav-tab').classList.add('active');
+      
+      // Initialize map if maps tab is opened
+      if (tabName === 'maps') {
+        setTimeout(initializeMap, 100);
+      }
+    }
+    
+    function initializeMap() {
+      if (map) return;
+      
+      map = L.map('map').setView([51.5074, -0.1278], 16);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      
+      // Add sample markers
+      const locations = [
+        {lat: 51.5074, lng: -0.1278, reports: 47, area: 'Science Block', priority: 'high'},
+        {lat: 51.5076, lng: -0.1280, reports: 32, area: 'Main Corridor', priority: 'medium'},
+        {lat: 51.5072, lng: -0.1275, reports: 18, area: 'Sports Hall', priority: 'low'}
+      ];
+      
+      locations.forEach(location => {
+        const color = location.priority === 'high' ? '#e53e3e' : 
+                     location.priority === 'medium' ? '#dd6b20' : '#38a169';
+        
+        L.circleMarker([location.lat, location.lng], {
+          radius: 8 + (location.reports / 5),
+          fillColor: color,
+          color: '#fff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(map).bindPopup(`
+          <strong>${location.area}</strong><br>
+          Reports: ${location.reports}<br>
+          Priority: ${location.priority}
+        `);
+      });
+    }
+    
+    function simulateReport() {
+      showNotification('Test report submitted successfully - tracking ID: SR-2024-' + Math.floor(Math.random() * 1000));
+    }
+    
+    function refreshIntelligence() {
+      showNotification('API intelligence refreshed - new correlations identified across systems');
+    }
+    
+    function syncToExistingSystems() {
+      showNotification('Initiating bidirectional sync to CPOMS, MyConcern, and Google Classroom...');
+      
+      setTimeout(() => {
+        showNotification('✓ CPOMS: 3 new SafeShout incidents synced - case files updated');
+      }, 1000);
+      
+      setTimeout(() => {
+        showNotification('✓ MyConcern: 2 wellbeing alerts created from SafeShout reports');
+      }, 2000);
+      
+      setTimeout(() => {
+        showNotification('✓ Google Classroom: Teacher notifications sent for academic monitoring');
+      }, 3000);
+      
+      setTimeout(() => {
+        showNotification('Bidirectional sync complete - SafeShout reports now visible in all existing school systems');
+      }, 4000);
+    }
+    
+    function runCorrelationAnalysis() {
+      showNotification('Running cross-system correlation analysis with bidirectional data...');
+      setTimeout(() => {
+        showNotification('Correlation analysis complete - new patterns identified across SafeShout and existing systems');
+      }, 2500);
+    }
+    
+    function processConsent() {
+      const newCases = [
+        {
+          id: 'SR-2024-158',
+          student: 'Maya Patel, 16 years',
+          report: 'Cyberbullying on social media platforms',
+          assessment: 'Fraser Gillick competent - Digital literacy demonstrated, moderate risk but manageable with student support. Consent form sent to student with comprehensive digital safety resources.',
+          type: 'competent',
+          consentType: 'Student Consent'
+        },
+        {
+          id: 'SR-2024-159',
+          student: 'Ben Wilson, 12 years',
+          report: 'Concerning adult behavior at local sports club',
+          assessment: 'Serious safeguarding concern - potential grooming behavior outside school environment. Below competency threshold due to age and complexity. Immediate parental consent required with multi-agency coordination.',
+          type: 'parental',
+          consentType: 'Parental Consent'
+        },
+        {
+          id: 'SR-2024-160',
+          student: 'Zara Ahmed, 15 years',
+          report: 'Domestic violence witnessed at home',
+          assessment: 'High-risk safeguarding concern - family-based violence detected. Despite age competency, parental involvement contraindicated. Social services consent pathway activated.',
+          type: 'parental',
+          consentType: 'Social Services'
+        }
+      ];
+      
+      const randomCase = newCases[Math.floor(Math.random() * newCases.length)];
+      
+      const caseHtml = `
+        <div style="background: ${randomCase.type === 'competent' ? '#f0fff4' : '#fef3c7'}; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid ${randomCase.type === 'competent' ? '#38a169' : '#d69e2e'}; animation: slideIn 0.5s ease;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <strong>Case #${randomCase.id}</strong>
+            <span style="background: ${randomCase.type === 'competent' ? '#38a169' : '#d69e2e'}; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">${randomCase.consentType}</span>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <strong>${randomCase.student}</strong><br>
+            <span style="color: var(--text-light);">Report: ${randomCase.report}</span>
+          </div>
+          <div style="background: white; padding: 1rem; border-radius: 6px; font-size: 0.875rem;">
+            <strong>AI Assessment Result:</strong> ${randomCase.assessment}
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('consentCases').insertAdjacentHTML('afterbegin', caseHtml);
+      showNotification(`New case processed: ${randomCase.id} - AI Fraser Gillick assessment completed, ${randomCase.consentType.toLowerCase()} pathway selected`);
+    }
+    
+    function simulateConsentFlow() {
+      const steps = [
+        'AI Fraser Gillick assessment initiated - analyzing case complexity and risk factors',
+        'Student age and competency evaluation completed - understanding assessment in progress',
+        'School database integration - family information and contact details retrieved from SIMS',
+        'Legal compliance check - GDPR Article 8 and Children Act 1989 requirements verified',
+        'Consent form generated with case-specific legal requirements and safeguarding protocols',
+        'Secure delivery confirmed - encrypted email sent with multi-factor authentication required',
+        'Digital signature portal activated - legal validation and identity verification enabled',
+        'Case activation complete - automated support coordination and follow-up scheduling initiated'
+      ];
+      
+      steps.forEach((step, index) => {
+        setTimeout(() => {
+          showNotification(step);
+        }, index * 2000);
+      });
+    }
+    
+    function switchToSchoolFloorplan() {
+      document.getElementById('schoolFloorplan').style.display = 'block';
+      document.getElementById('communityMapView').style.display = 'none';
+      document.getElementById('floorplanBtn').style.background = 'var(--safeshout-purple)';
+      document.getElementById('communityBtn').style.background = 'var(--safeshout-orange)';
+      showNotification('Switched to school floorplan view - showing internal incident mapping');
+    }
+    
+    function switchToCommunityMap() {
+      document.getElementById('schoolFloorplan').style.display = 'none';
+      document.getElementById('communityMapView').style.display = 'block';
+      document.getElementById('floorplanBtn').style.background = 'var(--safeshout-orange)';
+      document.getElementById('communityBtn').style.background = 'var(--safeshout-purple)';
+      
+      // Initialize community map if not already done
+      setTimeout(initializeCommunityMap, 100);
+      showNotification('Switched to community map view - showing external safeguarding intelligence');
+    }
+    
+    function initializeCommunityMap() {
+      if (map) return;
+      
+      map = L.map('map').setView([51.5074, -0.1278], 14);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      
+      // Community locations with safeguarding concerns
+      const communityLocations = [
+        {lat: 51.5100, lng: -0.1200, reports: 31, area: 'Town Centre', type: 'Substance misuse, gang recruitment', priority: 'high'},
+        {lat: 51.5050, lng: -0.1350, reports: 24, area: 'Local Park', type: 'Online grooming, inappropriate contact', priority: 'high'},
+        {lat: 51.5120, lng: -0.1180, reports: 18, area: 'Bus Routes', type: 'Travel safety, harassment', priority: 'medium'},
+        {lat: 51.5000, lng: -0.1400, reports: 12, area: 'Shopping Centre', type: 'Criminal exploitation, theft', priority: 'medium'},
+        {lat: 51.5080, lng: -0.1320, reports: 8, area: 'Youth Club', type: 'Mental health concerns', priority: 'low'},
+        {lat: 51.5140, lng: -0.1150, reports: 6, area: 'Community Centre', type: 'Family support needs', priority: 'low'}
+      ];
+      
+      communityLocations.forEach(location => {
+        const color = location.priority === 'high' ? '#e53e3e' : 
+                     location.priority === 'medium' ? '#dd6b20' : '#38a169';
+        
+        L.circleMarker([location.lat, location.lng], {
+          radius: 8 + (location.reports / 3),
+          fillColor: color,
+          color: '#fff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(map).bindPopup(`
+          <strong>${location.area}</strong><br>
+          Reports: ${location.reports}<br>
+          Type: ${location.type}<br>
+          Priority: ${location.priority}<br>
+          <button onclick="coordinateResponse('${location.area}')" style="background: var(--safeshout-purple); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-top: 0.5rem; cursor: pointer;">Coordinate Response</button>
+        `);
+      });
+    }
+    
+    function refreshMaps() {
+      showNotification('Location intelligence refreshed - both internal and external data updated');
+    }
+    
+    function coordinateResponse(area) {
+      showNotification(`Multi-agency response coordination initiated for ${area}`);
+    }
+    
+    function generateInsights() {
+      showNotification('AI insights generated - 73% probability of Science Block incident next week');
+    }
+    
+    function updateBranding() {
+      showNotification('School branding updated and applied across platform');
+    }
+    
+    // Professional Actions Functions
+    function processNewAction() {
+      const newActions = [
+        {
+          id: 'SR-2024-261',
+          student: 'Oliver Martinez, Year 9',
+          concern: 'Suspected substance misuse',
+          rating: 'red',
+          actions: 'AI Recommendation: Immediate medical assessment, parent contact, police notification for substance analysis'
+        },
+        {
+          id: 'SR-2024-262',
+          student: 'Identity Protected',
+          concern: 'Mental health crisis - self-harm',
+          rating: 'red',
+          actions: 'AI Recommendation: Emergency counselling, CAMHS referral, safety plan implementation'
+        },
+        {
+          id: 'SR-2024-263',
+          student: 'Lily Thompson, Year 8',
+          concern: 'Repeated absences - family concerns',
+          rating: 'amber',
+          actions: 'AI Recommendation: Home visit, family support assessment, attendance intervention plan'
+        }
+      ];
+      
+      const randomAction = newActions[Math.floor(Math.random() * newActions.length)];
+      const ratingColor = randomAction.rating === 'red' ? '#e53e3e' : 
+                         randomAction.rating === 'amber' ? '#dd6b20' : '#38a169';
+      const ratingBg = randomAction.rating === 'red' ? '#fef2f2' : 
+                      randomAction.rating === 'amber' ? '#fef7ed' : '#f0fff4';
+      
+      showNotification(`New ${randomAction.rating.toUpperCase()} priority case received: ${randomAction.id} - DSL approval required for AI recommendations`);
+    }
+    
+    // Interactive Map Functions
+    let currentZoom = 1;
+    let isSatelliteView = false;
+    let isHeatmapEnabled = true;
+    
+    function zoomIn() {
+      currentZoom = Math.min(currentZoom + 0.2, 3);
+      updateMapZoom();
+      document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+      showNotification('Map zoomed in - enhanced detail view');
+    }
+    
+    function zoomOut() {
+      currentZoom = Math.max(currentZoom - 0.2, 0.5);
+      updateMapZoom();
+      document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+      showNotification('Map zoomed out - broader area view');
+    }
+    
+    function updateMapZoom() {
+      const streetMap = document.getElementById('streetMap');
+      streetMap.style.transform = `scale(${currentZoom})`;
+    }
+    
+    function toggleSatellite() {
+      const streetMap = document.getElementById('streetMap');
+      const satelliteMap = document.getElementById('satelliteMap');
+      const btn = document.getElementById('mapViewBtn');
+      
+      isSatelliteView = !isSatelliteView;
+      
+      if (isSatelliteView) {
+        streetMap.style.display = 'none';
+        satelliteMap.style.display = 'block';
+        btn.textContent = '🗺️ Street Map';
+        btn.style.background = 'var(--primary)';
+        btn.style.color = 'white';
+        showNotification('Satellite view activated - connect mapping API for live imagery');
+      } else {
+        streetMap.style.display = 'block';
+        satelliteMap.style.display = 'none';
+        btn.textContent = '📡 Satellite';
+        btn.style.background = '#f8fafc';
+        btn.style.color = 'inherit';
+        showNotification('Street map view restored');
+      }
+    }
+    
+    function toggleHeatmap() {
+      const btn = document.getElementById('heatmapBtn');
+      isHeatmapEnabled = !isHeatmapEnabled;
+      
+      if (isHeatmapEnabled) {
+        btn.style.background = 'var(--primary)';
+        btn.textContent = '🔥 Heat Map';
+        showNotification('Heat map enabled - showing risk concentration areas');
+      } else {
+        btn.style.background = '#6b7280';
+        btn.textContent = '📍 Markers';
+        showNotification('Standard markers view - individual location details');
+      }
+    }
+    
+    function showLocationDetails(locationId) {
+      const locationData = {
+        school: {
+          title: '🏫 Riverside Academy',
+          content: `
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+              <div style="background: #dbeafe; padding: 0.5rem; border-radius: 4px;">
+                <strong>School Base</strong><br>
+                <span style="font-size: 0.9rem;">Safe zone for students</span>
+              </div>
+              <div style="background: #f0f9ff; padding: 0.5rem; border-radius: 4px;">
+                <strong>Reports:</strong> 0<br>
+                <span style="font-size: 0.9rem;">Internal tracking only</span>
+              </div>
+            </div>
+            <p><strong>Address:</strong> Church Lane, Riverside<br>
+            <strong>Contact:</strong> safeguarding@riverside-academy.edu<br>
+            <strong>DSL:</strong> Mrs Roberts</p>
+          `
+        },
+        towncentre: {
+          title: '🏪 Town Centre - HIGH RISK',
+          content: `
+            <div style="background: #fef2f2; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border-left: 4px solid #dc2626;">
+              <strong>🚨 31 Reports in Past 6 Months</strong><br>
+              <span style="color: #dc2626;">Substance misuse, gang recruitment</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <strong>Peak Times:</strong> 3:30-6:00 PM (after school)<br>
+              <strong>Hotspots:</strong> High Street shops, bus station<br>
+              <strong>Age Groups:</strong> 14-16 years primarily affected
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button onclick="coordinateResponse('Town Centre')" style="background: #dc2626; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">Alert Agencies</button>
+              <button style="background: #0ea5e9; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">Plan Route</button>
+            </div>
+          `
+        },
+        park: {
+          title: '🌳 Victoria Park - HIGH RISK',
+          content: `
+            <div style="background: #fef2f2; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border-left: 4px solid #dc2626;">
+              <strong>🚨 24 Reports in Past 6 Months</strong><br>
+              <span style="color: #dc2626;">Online grooming, inappropriate contact</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <strong>Peak Times:</strong> Weekends and school holidays<br>
+              <strong>Areas:</strong> Playground, wooded sections<br>
+              <strong>Pattern:</strong> Adult strangers approaching children
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button onclick="coordinateResponse('Victoria Park')" style="background: #dc2626; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">Police Contact</button>
+              <button style="background: #0ea5e9; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">Safety Plan</button>
+            </div>
+          `
+        },
+        shopping: {
+          title: '🛒 Westfield Centre - MEDIUM RISK',
+          content: `
+            <div style="background: #fef7ed; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border-left: 4px solid #ea580c;">
+              <strong>⚠️ 12 Reports in Past 6 Months</strong><br>
+              <span style="color: #ea580c;">Criminal exploitation, theft</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <strong>Peak Times:</strong> Saturday afternoons<br>
+              <strong>Issues:</strong> Shoplifting pressure, older teens<br>
+              <strong>Location:</strong> Food court, gaming areas
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button style="background: #ea580c; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">Security Liaison</button>
+              <button style="background: #0ea5e9; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">Monitor</button>
+            </div>
+          `
+        },
+        bus47: {
+          title: '🚌 Bus Route 47 - MEDIUM RISK',
+          content: `
+            <div style="background: #fef7ed; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+              <strong>⚠️ 18 Reports in Past 6 Months</strong><br>
+              <span style="color: #d97706;">Travel safety, harassment</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <strong>Peak Times:</strong> School commute hours<br>
+              <strong>Issues:</strong> Bullying on buses, inappropriate behavior<br>
+              <strong>Route:</strong> School → Town Centre → Housing Estate
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button style="background: #f59e0b; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">Bus Company</button>
+              <button style="background: #0ea5e9; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">Route Plan</button>
+            </div>
+          `
+        }
+      };
+      
+      const location = locationData[locationId];
+      if (location) {
+        document.getElementById('locationTitle').textContent = location.title;
+        document.getElementById('locationContent').innerHTML = location.content;
+        document.getElementById('locationDetails').style.display = 'block';
+        showNotification(`Location details loaded: ${location.title}`);
+      }
+    }
+    
+    function closeLocationDetails() {
+      document.getElementById('locationDetails').style.display = 'none';
+    }
+    
+    // Real OpenStreetMap Integration
+    let realMap = null;
+    let safeguardingMarkers = [];
+    
+    function initializeRealMap() {
+      if (realMap) return;
+      
+      // Center on a realistic UK location (Reading area - good for schools)
+      realMap = L.map('realMap').setView([51.4545, -0.9781], 14);
+      
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(realMap);
+      
+      // Add safeguarding concern locations with real coordinates
+      const safeguardingData = [
+        {
+          lat: 51.4580, 
+          lng: -0.9720, 
+          reports: 31, 
+          area: 'Town Centre', 
+          type: 'Substance misuse, gang recruitment', 
+          priority: 'high',
+          description: 'Reading town centre shopping area - after school hotspot'
+        },
+        {
+          lat: 51.4520, 
+          lng: -0.9850, 
+          reports: 24, 
+          area: 'Forbury Gardens', 
+          type: 'Online grooming, inappropriate contact', 
+          priority: 'high',
+          description: 'Public park area with playground facilities'
+        },
+        {
+          lat: 51.4590, 
+          lng: -0.9650, 
+          reports: 18, 
+          area: 'Reading Station', 
+          type: 'Travel safety, harassment', 
+          priority: 'medium',
+          description: 'Main transport hub - student commute area'
+        },
+        {
+          lat: 51.4560, 
+          lng: -0.9700, 
+          reports: 12, 
+          area: 'The Oracle Shopping Centre', 
+          type: 'Criminal exploitation, theft', 
+          priority: 'medium',
+          description: 'Large shopping complex popular with teenagers'
+        },
+        {
+          lat: 51.4500, 
+          lng: -0.9800, 
+          reports: 8, 
+          area: 'University Campus', 
+          type: 'Mental health concerns', 
+          priority: 'low',
+          description: 'Student support and wellbeing area'
+        },
+        {
+          lat: 51.4620, 
+          lng: -0.9600, 
+          reports: 6, 
+          area: 'Caversham Bridge', 
+          type: 'Social isolation', 
+          priority: 'low',
+          description: 'Thames crossing point - community meeting area'
+        }
+      ];
+      
+      // School location marker
+      const schoolMarker = L.marker([51.4545, -0.9781], {
+        icon: L.divIcon({
+          className: 'school-marker',
+          html: '<div style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-align: center;">🏫 Riverside Academy</div>',
+          iconSize: [140, 30],
+          iconAnchor: [70, 15]
+        })
+      }).addTo(realMap);
+      
+      schoolMarker.bindPopup(`
+        <div style="min-width: 200px;">
+          <h4>🏫 Riverside Academy</h4>
+          <p><strong>Address:</strong> Church Lane, Reading<br>
+          <strong>DSL:</strong> Mrs Roberts<br>
+          <strong>Contact:</strong> safeguarding@riverside-academy.edu</p>
+          <div style="margin-top: 10px;">
+            <button onclick="showLocationDetails('school')" style="background: #3b82f6; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">School Details</button>
+          </div>
+        </div>
+      `);
+      
+      // Add safeguarding concern markers
+      safeguardingData.forEach((location, index) => {
+        const color = location.priority === 'high' ? '#dc2626' : 
+                     location.priority === 'medium' ? '#ea580c' : '#16a34a';
+        
+        const marker = L.circleMarker([location.lat, location.lng], {
+          radius: 8 + (location.reports / 4),
+          fillColor: color,
+          color: '#fff',
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(realMap);
+        
+        marker.bindPopup(`
+          <div style="min-width: 250px;">
+            <h4 style="color: ${color}; margin-bottom: 10px;">
+              ${location.priority === 'high' ? '🚨' : location.priority === 'medium' ? '⚠️' : '📍'} 
+              ${location.area}
+            </h4>
+            <div style="background: ${location.priority === 'high' ? '#fef2f2' : location.priority === 'medium' ? '#fef7ed' : '#f0fdf4'}; 
+                        padding: 8px; border-radius: 4px; margin-bottom: 10px;
+                        border-left: 4px solid ${color};">
+              <strong>${location.reports} Reports (6 months)</strong><br>
+              <span style="color: ${color};">${location.type}</span>
+            </div>
+            <p style="font-size: 0.9rem; margin-bottom: 10px;">${location.description}</p>
+            <div style="display: flex; gap: 5px;">
+              <button onclick="coordinateResponse('${location.area}')" 
+                      style="background: ${color}; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                Alert Agencies
+              </button>
+              <button onclick="showLocationDetails('location${index}')" 
+                      style="background: #0ea5e9; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                Full Details
+              </button>
+            </div>
+          </div>
+        `);
+        
+        safeguardingMarkers.push({marker, data: location});
+      });
+      
+      showNotification('Real map loaded with OpenStreetMap - showing Reading area with safeguarding intelligence');
+    }
+    
+    // Update zoom functions for real map
+    function zoomIn() {
+      if (realMap) {
+        const currentZoom = realMap.getZoom();
+        realMap.setZoom(Math.min(currentZoom + 1, 19));
+        document.getElementById('zoomLevel').textContent = Math.round((realMap.getZoom() / 19) * 100) + '%';
+        showNotification('Map zoomed in - enhanced detail view');
+      }
+    }
+    
+    function zoomOut() {
+      if (realMap) {
+        const currentZoom = realMap.getZoom();
+        realMap.setZoom(Math.max(currentZoom - 1, 1));
+        document.getElementById('zoomLevel').textContent = Math.round((realMap.getZoom() / 19) * 100) + '%';
+        showNotification('Map zoomed out - broader area view');
+      }
+    }
+    
+    function toggleSatellite() {
+      if (!realMap) return;
+      
+      const btn = document.getElementById('mapViewBtn');
+      
+      if (btn.textContent.includes('Satellite')) {
+        // Switch to satellite view (requires additional tile layer)
+        realMap.eachLayer(function(layer) {
+          if (layer._url && layer._url.includes('openstreetmap')) {
+            realMap.removeLayer(layer);
+          }
+        });
+        
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: '© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
+        }).addTo(realMap);
+        
+        btn.textContent = '🗺️ Street Map';
+        btn.style.background = 'var(--primary)';
+        btn.style.color = 'white';
+        showNotification('Satellite view activated - showing aerial imagery');
+      } else {
+        // Switch back to street map
+        realMap.eachLayer(function(layer) {
+          if (layer._url && !layer._url.includes('openstreetmap')) {
+            realMap.removeLayer(layer);
+          }
+        });
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(realMap);
+        
+        btn.textContent = '📡 Satellite';
+        btn.style.background = '#f8fafc';
+        btn.style.color = 'inherit';
+        showNotification('Street map view restored');
+      }
+    }
+    
+    function toggleHeatmap() {
+      if (!realMap) return;
+      
+      const btn = document.getElementById('heatmapBtn');
+      isHeatmapEnabled = !isHeatmapEnabled;
+      
+      if (isHeatmapEnabled) {
+        // Show all markers
+        safeguardingMarkers.forEach(({marker}) => {
+          if (!realMap.hasLayer(marker)) {
+            realMap.addLayer(marker);
+          }
+        });
+        btn.style.background = 'var(--primary)';
+        btn.textContent = '🔥 Heat Map';
+        showNotification('Heat map enabled - showing all risk concentration areas');
+      } else {
+        // Hide low priority markers
+        safeguardingMarkers.forEach(({marker, data}) => {
+          if (data.priority === 'low') {
+            realMap.removeLayer(marker);
+          }
+        });
+        btn.style.background = '#6b7280';
+        btn.textContent = '📍 Priority Only';
+        showNotification('Priority view - showing high and medium risk areas only');
+      }
+    }
+    
+    // Initialize map when maps tab is clicked
+    function switchToCommunityMap() {
+      document.getElementById('schoolFloorplan').style.display = 'none';
+      document.getElementById('communityMapView').style.display = 'block';
+      document.getElementById('floorplanBtn').style.background = 'var(--safeshout-orange)';
+      document.getElementById('communityBtn').style.background = 'var(--safeshout-purple)';
+      
+      // Initialize real map after a short delay to ensure container is visible
+      setTimeout(() => {
+        initializeRealMap();
+        if (realMap) {
+          realMap.invalidateSize();
+        }
+      }, 100);
+      
+      showNotification('Real community map loaded - showing OpenStreetMap data with safeguarding intelligence');
+    }
+    
+    function refreshActionQueue() {
+      showNotification('Professional action queue refreshed - 3 new cases require DSL review and assignment');
+    }
+    
+    function filterByRating(rating) {
+      const sections = ['redCases', 'amberCases', 'greenCases'];
+      sections.forEach(section => {
+        document.getElementById(section).style.display = 'none';
+      });
+      
+      const targetSection = rating === 'red' ? 'redCases' : 
+                           rating === 'amber' ? 'amberCases' : 'greenCases';
+      document.getElementById(targetSection).style.display = 'block';
+      
+      const ratingNames = {
+        red: 'CRITICAL',
+        amber: 'HIGH PRIORITY', 
+        green: 'STANDARD'
+      };
+      
+      showNotification(`Filtered to show ${ratingNames[rating]} cases only - DSL can review and assign actions`);
+      
+      // Reset filter after 3 seconds
+      setTimeout(() => {
+        sections.forEach(section => {
+          document.getElementById(section).style.display = 'block';
+        });
+        showNotification('Filter cleared - showing all cases');
+      }, 3000);
+    }
+    
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--safeshout-purple);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        max-width: 350px;
+        animation: slideIn 0.3s ease;
+      `;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+    
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+  
+  <!-- Leaflet JavaScript for OpenStreetMap -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>
